@@ -28,6 +28,25 @@ describe('token storage', () => {
       expect(typeof backend).toBe('string');
     });
 
+    it('never reaches for the removed electron.remote shim', () => {
+      // Accessing require('electron').remote in a real Pulsar window throws
+      // "electron.remote is deprecated and removed!". The spec environment
+      // still answers for it, which is exactly why this is asserted on the
+      // source rather than by calling it.
+      const source = require('fs').readFileSync(require.resolve('../lib/secrets'), 'utf8');
+      const code = source.split('\n').filter((line) => !line.trim().startsWith('*') && !line.trim().startsWith('//'));
+      expect(code.join('\n')).not.toContain("require('electron').remote");
+    });
+
+    it('says why encrypted storage is off when it is', () => {
+      if (secrets.keyringAvailable()) {
+        expect(secrets.keyringUnavailableReason()).toBe(null);
+      } else {
+        // A silent "not available" leaves the user with no idea what to fix.
+        expect(typeof secrets.keyringUnavailableReason()).toBe('string');
+      }
+    });
+
     it('refuses to call the plaintext fallback "available"', () => {
       // Electron's isEncryptionAvailable() returns true even when the backend
       // is basic_text, where the key is hardcoded in Chromium's source. That is
