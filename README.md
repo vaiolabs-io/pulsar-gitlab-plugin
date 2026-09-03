@@ -24,7 +24,13 @@ Cancel button that answers with an error.
 
 ## Install
 
-The package is not on the Pulsar registry. Clone it and link it:
+```bash
+ppm install gitlab-pipelines
+```
+
+Or from Settings > Install, searching for `gitlab-pipelines`.
+
+To hack on it instead:
 
 ```bash
 git clone git@github.com:vaiolabs-io/pulsar-gitlab-plugin.git ~/Projects/pulsar-plugin-gitlab
@@ -33,7 +39,7 @@ ppm install     # one pure-JS dependency, @electron/remote
 ppm link
 ```
 
-Then reload the window (`Window: Reload`, or `ctrl-shift-F5`).
+Either way, reload the window afterwards (`Window: Reload`, or `ctrl-shift-F5`).
 
 ## Connect
 
@@ -162,11 +168,18 @@ Run it against a throwaway config directory to keep your own untouched:
 ATOM_HOME=/tmp/pulsar-test pulsar --test spec/
 ```
 
-One quirk worth knowing: in a full-suite run, whichever spec happens to run
-first fails with a timeout and is then retried and passes. That is Pulsar's own
-harness warming up inside the 5-second budget it sets for each spec, not this
-package — every spec file passes cleanly when run on its own, and the suite
-exits 0.
+Two quirks worth knowing.
+
+In a full-suite run, whichever spec happens to run first fails with a timeout
+and is then retried and passes. That is Pulsar's own harness warming up inside
+the 5-second budget it sets for each spec, not this package — every spec file
+passes cleanly when run on its own, and the suite exits 0.
+
+**The spec environment answers for `require('electron').remote`; a real Pulsar
+window does not** — there it is removed and throws. Never use it, and never
+trust a spec that calls it. The one test guarding this asserts on the source
+text of `lib/secrets.js` for exactly that reason. Use the pinned
+`@electron/remote` dependency instead.
 
 After changing code, reload the Pulsar window. Stylesheet changes apply live.
 
