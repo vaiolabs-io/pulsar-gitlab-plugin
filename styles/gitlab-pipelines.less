@@ -1,0 +1,370 @@
+// Everything here is built from Pulsar's own theme variables rather than fixed
+// colours, so the panel follows whatever theme the user picked - light, dark,
+// or one of the high-contrast ones - without a second stylesheet.
+@import "ui-variables";
+@import "syntax-variables";
+
+.gitlab-pipelines {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 260px;
+  font-size: @font-size;
+  color: @text-color;
+  background-color: @tool-panel-background-color;
+
+  .gl-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: @component-padding / 2;
+    padding: @component-padding;
+    border-bottom: 1px solid @tool-panel-border-color;
+  }
+
+  .gl-context {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .gl-context-project {
+    font-weight: bold;
+    // A long group/subgroup/project path must not force the whole dock wider.
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gl-context-branch {
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gl-header-actions {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .gl-message {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: @component-padding;
+    border-bottom: 1px solid @tool-panel-border-color;
+    font-size: 0.95em;
+
+    &.gl-message-error {
+      color: @text-color-error;
+      background-color: @background-color-error;
+    }
+
+    &.gl-message-info {
+      color: @text-color-info;
+      background-color: @background-color-info;
+    }
+
+    .gl-message-text {
+      flex: 1;
+      // An API error can be a paragraph. Let it wrap rather than clipping the
+      // half that says what to do about it.
+      white-space: normal;
+      word-break: break-word;
+    }
+  }
+
+  .gl-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .gl-section-header {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 2) @component-padding;
+    cursor: pointer;
+    user-select: none;
+    background-color: @tool-panel-background-color;
+
+    &:hover { background-color: @background-color-highlight; }
+  }
+
+  .gl-section-title {
+    flex: 1;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.04em;
+    color: @text-color-subtle;
+  }
+
+  .gl-section-content { padding-bottom: @component-padding / 2; }
+
+  .gl-empty {
+    padding: (@component-padding / 2) @component-padding @component-padding;
+    font-size: 0.95em;
+  }
+
+  .gl-pipeline-summary {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 2) @component-padding;
+
+    .gl-pipeline-title { font-weight: bold; }
+    .gl-pipeline-meta { flex: 1; font-size: 0.9em; }
+  }
+
+  .gl-stage {
+    padding: 0 @component-padding;
+  }
+
+  .gl-stage-header {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 3) 0;
+    font-size: 0.9em;
+    color: @text-color-subtle;
+  }
+
+  .gl-job {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 3) 0 (@component-padding / 3) @component-padding;
+    border-radius: @component-border-radius;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @background-color-highlight;
+      .gl-job-actions { visibility: visible; }
+    }
+
+    .gl-job-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gl-job-meta { font-size: 0.85em; }
+
+    // Action buttons stay out of the way until you point at the row, so a list
+    // of thirty jobs reads as a list rather than a wall of buttons.
+    .gl-job-actions { visibility: hidden; }
+  }
+
+  .gl-job-allow-failure .gl-job-name { opacity: 0.75; }
+
+  .gl-pipeline-row {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 3) @component-padding;
+    cursor: pointer;
+
+    &:hover { background-color: @background-color-highlight; }
+
+    .gl-pipeline-row-title { font-weight: bold; }
+    .gl-pipeline-row-ref {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .gl-pipeline-row-when { font-size: 0.85em; }
+  }
+
+  .gl-schedule {
+    display: flex;
+    align-items: flex-start;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 3) @component-padding;
+
+    &:hover {
+      background-color: @background-color-highlight;
+      .gl-schedule-actions { visibility: visible; }
+    }
+
+    .gl-schedule-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .gl-schedule-description { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gl-schedule-meta { font-size: 0.85em; }
+    .gl-schedule-actions { visibility: hidden; }
+  }
+
+  // An off schedule is still listed, just visibly asleep.
+  .gl-schedule-off .gl-schedule-description { opacity: 0.6; }
+
+  .gl-footer {
+    padding: (@component-padding / 2) @component-padding;
+    border-top: 1px solid @tool-panel-border-color;
+    font-size: 0.85em;
+    min-height: 1.6em;
+  }
+
+  // The refresh icon turns while a request is open. Purely so a slow
+  // self-hosted instance does not look like a frozen panel.
+  .gl-spinning::before {
+    animation: gl-spin 1s linear infinite;
+    display: inline-block;
+  }
+}
+
+@keyframes gl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gitlab-pipelines-status {
+  .gl-status-text { margin-left: 0.3em; }
+}
+
+// ---- job log ---------------------------------------------------------------
+
+.gitlab-job-log {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: @syntax-background-color;
+  color: @syntax-text-color;
+
+  .gl-log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    padding: (@component-padding / 2) @component-padding;
+    border-bottom: 1px solid @tool-panel-border-color;
+    background-color: @tool-panel-background-color;
+    color: @text-color;
+
+    .gl-log-spacer { flex: 1; }
+  }
+
+  .gl-log-status-failed { color: @text-color-error; }
+  .gl-log-status-success { color: @text-color-success; }
+  .gl-log-status-running { color: @text-color-info; }
+
+  .gl-log-output {
+    flex: 1;
+    margin: 0;
+    padding: @component-padding;
+    overflow: auto;
+    font-family: @font-family;
+    font-size: @font-size;
+    line-height: 1.4;
+    // Build output is full of long lines. Wrapping beats a horizontal
+    // scrollbar you have to drag for every line.
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .gl-log-line { min-height: 1.4em; }
+  .gl-log-error { color: @text-color-error; }
+  .gl-log-truncated {
+    color: @text-color-warning;
+    font-style: italic;
+    padding-bottom: @component-padding / 2;
+  }
+
+  .gl-log-section {
+    margin: (@component-padding / 4) 0;
+
+    > summary {
+      cursor: pointer;
+      color: @text-color-highlight;
+      font-weight: bold;
+    }
+  }
+
+  .gl-log-section-body { padding-left: @component-padding; }
+}
+
+// ANSI colours. Mapped onto the active syntax theme rather than hardcoded, so
+// build output sits in the same palette as the code next to it.
+.gitlab-job-log {
+  .ansi-bold { font-weight: bold; }
+  .ansi-dim { opacity: 0.7; }
+  .ansi-italic { font-style: italic; }
+  .ansi-underline { text-decoration: underline; }
+
+  .ansi-fg-black { color: @syntax-text-color; opacity: 0.6; }
+  .ansi-fg-red, .ansi-fg-bright-red { color: @text-color-error; }
+  .ansi-fg-green, .ansi-fg-bright-green { color: @text-color-success; }
+  .ansi-fg-yellow, .ansi-fg-bright-yellow { color: @text-color-warning; }
+  .ansi-fg-blue, .ansi-fg-bright-blue { color: @text-color-info; }
+  .ansi-fg-magenta, .ansi-fg-bright-magenta { color: @text-color-highlight; }
+  .ansi-fg-cyan, .ansi-fg-bright-cyan { color: @text-color-info; }
+  .ansi-fg-white, .ansi-fg-bright-white { color: @text-color-highlight; }
+
+  .ansi-bg-red { background-color: @background-color-error; }
+  .ansi-bg-green { background-color: @background-color-success; }
+  .ansi-bg-yellow { background-color: @background-color-warning; }
+  .ansi-bg-blue { background-color: @background-color-info; }
+}
+
+// ---- connection dialog -----------------------------------------------------
+
+.gitlab-connection-dialog {
+  padding: @component-padding;
+  max-width: 46em;
+
+  h2 { margin-top: 0; }
+
+  .gl-field { margin-bottom: @component-padding; }
+
+  .gl-field-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: @component-padding / 4;
+  }
+
+  .input-text, .input-select { width: 100%; }
+
+  .gl-field-hint {
+    margin-top: @component-padding / 4;
+    font-size: 0.9em;
+    white-space: normal;
+  }
+
+  .gl-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: @component-padding / 2;
+    font-weight: bold;
+  }
+
+  .gl-tls {
+    margin-bottom: @component-padding;
+    padding: @component-padding / 2;
+    border: 1px solid @tool-panel-border-color;
+    border-radius: @component-border-radius;
+
+    > summary { cursor: pointer; font-weight: bold; }
+  }
+
+  .gl-dialog-result {
+    margin-bottom: @component-padding;
+    min-height: 1.4em;
+    white-space: normal;
+
+    &.gl-dialog-result-ok { color: @text-color-success; }
+    &.gl-dialog-result-error { color: @text-color-error; }
+    &.gl-dialog-result-pending { color: @text-color-subtle; }
+  }
+
+  .gl-dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: @component-padding / 2;
+  }
+}

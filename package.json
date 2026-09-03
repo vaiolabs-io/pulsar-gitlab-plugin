@@ -1,0 +1,87 @@
+{
+  "name": "gitlab-pipelines",
+  "version": "0.1.0",
+  "description": "View, run and toggle GitLab CI/CD pipelines from inside Pulsar. Works with gitlab.com and self-hosted instances on a local network.",
+  "keywords": [
+    "gitlab",
+    "gitlab-ci",
+    "ci",
+    "cd",
+    "pipelines",
+    "devops"
+  ],
+  "repository": "https://github.com/aschapelle/pulsar-plugin-gitlab",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.100.0 <2.0.0",
+    "pulsar": ">=1.100.0 <2.0.0"
+  },
+  "main": "./lib/main",
+  "atomTestRunner": "runners/jasmine2-test-runner",
+  "activationCommands": {
+    "atom-workspace": [
+      "gitlab-pipelines:toggle",
+      "gitlab-pipelines:add-connection",
+      "gitlab-pipelines:run-pipeline",
+      "gitlab-pipelines:lint-ci-config",
+      "gitlab-pipelines:refresh",
+      "gitlab-pipelines:schedules"
+    ]
+  },
+  "activationHooks": [
+    "core:loaded-shell-environment"
+  ],
+  "consumedServices": {
+    "status-bar": {
+      "versions": {
+        "^1.0.0": "consumeStatusBar"
+      }
+    }
+  },
+  "dependencies": {
+    "@electron/remote": "2.1.2"
+  },
+  "devDependencies": {},
+  "workspaceOpeners": [
+    "gitlab-pipelines://pipelines"
+  ],
+  "deserializers": {
+    "GitlabPipelinesView": "deserializePipelinesView"
+  },
+  "configSchema": {
+    "gitRemoteName": {
+      "order": 1,
+      "type": "string",
+      "default": "",
+      "title": "Git remote to follow",
+      "description": "Which remote points at GitLab. Leave blank to use the first remote whose host matches one of your connections - that is the right answer when `origin` is a GitHub mirror."
+    },
+    "notifications": {
+      "order": 2,
+      "type": "string",
+      "default": "failure",
+      "radio": true,
+      "title": "Tell me when a pipeline finishes",
+      "enum": [
+        {
+          "value": "never",
+          "description": "Never"
+        },
+        {
+          "value": "failure",
+          "description": "Only when it fails"
+        },
+        {
+          "value": "always",
+          "description": "Every result"
+        }
+      ]
+    },
+    "showStatusBar": {
+      "order": 3,
+      "type": "boolean",
+      "default": true,
+      "title": "Show pipeline status in the status bar"
+    }
+  }
+}

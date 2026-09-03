@@ -1,0 +1,31 @@
+{
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "GitLab Pipelines",
+          "submenu": [
+            { "label": "Toggle Panel", "command": "gitlab-pipelines:toggle" },
+            { "label": "Refresh Now", "command": "gitlab-pipelines:refresh" },
+            { "type": "separator" },
+            { "label": "Run Pipeline On This Branch", "command": "gitlab-pipelines:run-pipeline" },
+            { "label": "Check .gitlab-ci.yml", "command": "gitlab-pipelines:lint-ci-config" },
+            { "type": "separator" },
+            { "label": "Connect To GitLab...", "command": "gitlab-pipelines:add-connection" },
+            { "label": "Manage Connections...", "command": "gitlab-pipelines:manage-connections" }
+          ]
+        }
+      ]
+    }
+  ],
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "GitLab: Check this CI file",
+        "command": "gitlab-pipelines:lint-ci-config",
+        "shouldDisplay": true
+      }
+    ]
+  }
+}

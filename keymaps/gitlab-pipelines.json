@@ -1,0 +1,9 @@
+{
+  "atom-workspace": {
+    "ctrl-alt-g": "gitlab-pipelines:toggle",
+    "ctrl-alt-r": "gitlab-pipelines:refresh"
+  },
+  "atom-text-editor:not([mini])": {
+    "ctrl-alt-l": "gitlab-pipelines:lint-ci-config"
+  }
+}
