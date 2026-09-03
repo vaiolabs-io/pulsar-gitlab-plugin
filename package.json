@@ -10,7 +10,7 @@
     "pipelines",
     "devops"
   ],
-  "repository": "https://github.com/aschapelle/pulsar-plugin-gitlab",
+  "repository": "https://github.com/vaiolabs-io/pulsar-gitlab-plugin",
   "license": "MIT",
   "engines": {
     "atom": ">=1.100.0 <2.0.0",

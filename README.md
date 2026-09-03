@@ -27,7 +27,7 @@ Cancel button that answers with an error.
 The package is not on the Pulsar registry. Clone it and link it:
 
 ```bash
-git clone <this repo> ~/Projects/pulsar-plugin-gitlab
+git clone git@github.com:vaiolabs-io/pulsar-gitlab-plugin.git ~/Projects/pulsar-plugin-gitlab
 cd ~/Projects/pulsar-plugin-gitlab
 ppm install     # one pure-JS dependency, @electron/remote
 ppm link
