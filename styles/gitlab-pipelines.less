@@ -118,6 +118,82 @@
     .gl-pipeline-meta { flex: 1; font-size: 0.9em; }
   }
 
+  // The stage strip. One dot per stage, in run order, with a connector between
+  // them so it reads as a sequence rather than a set.
+  .gl-stage-strip {
+    display: flex;
+    align-items: flex-start;
+    padding: 0 @component-padding (@component-padding / 2);
+    // A pipeline with a dozen stages scrolls sideways rather than forcing the
+    // whole dock wider or wrapping into an unreadable block.
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    &:empty { display: none; }
+
+    // Thin scrollbar, and only while pointing at the strip.
+    scrollbar-width: thin;
+  }
+
+  .gl-strip-stage {
+    // A button, so it is keyboard reachable, but it must not look like one.
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0 (@component-padding / 4);
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    position: relative;
+    max-width: 7em;
+
+    &:hover .gl-strip-name { color: @text-color-highlight; }
+
+    &:focus {
+      outline: none;
+      .gl-strip-dot { box-shadow: 0 0 0 2px @button-background-color-selected; }
+    }
+
+    // The connector, drawn between neighbours rather than as its own element,
+    // so the keyed patching only ever deals with one node per stage.
+    & + .gl-strip-stage::before {
+      content: '';
+      position: absolute;
+      left: -0.55em;
+      top: 0.55em;
+      width: 1.1em;
+      height: 1px;
+      background-color: @tool-panel-border-color;
+    }
+  }
+
+  .gl-strip-dot {
+    line-height: 1.1;
+    // The glyph differs per status as well as the colour, so the strip is
+    // still readable without colour vision.
+    &::before { margin: 0; }
+  }
+
+  .gl-strip-name {
+    font-size: 0.85em;
+    color: @text-color-subtle;
+    max-width: 7em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Clicking a dot scrolls to the stage below; this says the click landed,
+  // which matters when the list is short enough that nothing actually moves.
+  .gl-stage-flash {
+    animation: gl-flash 1.2s ease-out;
+  }
+
   .gl-stage {
     padding: 0 @component-padding;
   }
@@ -218,6 +294,11 @@
     animation: gl-spin 1s linear infinite;
     display: inline-block;
   }
+}
+
+@keyframes gl-flash {
+  from { background-color: @background-color-info; }
+  to { background-color: transparent; }
 }
 
 @keyframes gl-spin {

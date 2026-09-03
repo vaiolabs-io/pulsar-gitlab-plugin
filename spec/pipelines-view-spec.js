@@ -118,6 +118,121 @@ describe('PipelinesView', () => {
     });
   });
 
+  describe('the stage strip', () => {
+    beforeEach(() => view.update(Object.assign({}, baseModel, { detail: pipelineDetail() })));
+
+    const cells = () => view.element.querySelectorAll('.gl-stage-strip .gl-strip-stage');
+
+    it('shows one cell per stage, in the order GitLab runs them', () => {
+      expect(cells().length).toBe(2);
+      expect(cells()[0].querySelector('.gl-strip-name').textContent).toBe('build');
+      expect(cells()[1].querySelector('.gl-strip-name').textContent).toBe('test');
+    });
+
+    it('gives each stage its own glyph, not just a colour', () => {
+      // Colour alone is unreadable for a lot of people and vanishes in a
+      // high-contrast theme.
+      expect(cells()[0].querySelector('.gl-strip-dot').className).toContain('icon-check');
+      expect(cells()[1].querySelector('.gl-strip-dot').className).toContain('icon-sync');
+    });
+
+    it('labels each stage with its job progress for screen readers and tooltips', () => {
+      expect(cells()[0].getAttribute('aria-label')).toBe('build - passed (1/1 jobs)');
+      expect(cells()[1].getAttribute('aria-label')).toBe('test - running (0/2 jobs)');
+    });
+
+    it('patches cells in place rather than rebuilding the strip', () => {
+      const before = cells()[1];
+      const next = pipelineDetail();
+      next.stages.nodes[1].status = 'failed';
+      view.update({ detail: next });
+      expect(cells()[1]).toBe(before);
+      expect(cells()[1].querySelector('.gl-strip-dot').className).toContain('icon-x');
+    });
+
+    it('adds and removes cells as the stage list changes', () => {
+      const next = pipelineDetail();
+      next.stages.nodes.push({ name: 'deploy', status: 'manual', jobs: { nodes: [] } });
+      view.update({ detail: next });
+      expect(cells().length).toBe(3);
+      expect(cells()[2].querySelector('.gl-strip-name').textContent).toBe('deploy');
+
+      const fewer = pipelineDetail();
+      fewer.stages.nodes = [fewer.stages.nodes[0]];
+      view.update({ detail: fewer });
+      expect(cells().length).toBe(1);
+    });
+
+    it('keeps display order when GitLab reorders the stages', () => {
+      const next = pipelineDetail();
+      next.stages.nodes.reverse();
+      view.update({ detail: next });
+      expect(cells()[0].querySelector('.gl-strip-name').textContent).toBe('test');
+      expect(cells()[1].querySelector('.gl-strip-name').textContent).toBe('build');
+    });
+
+    it('disposes a tooltip when its stage disappears', () => {
+      // A tooltip left attached to a removed element is a leak, and these
+      // elements come and go on every poll.
+      const cell = view.stripCells.get('test');
+      let disposed = false;
+      cell.tooltip = { dispose: () => { disposed = true; } };
+      const fewer = pipelineDetail();
+      fewer.stages.nodes = [fewer.stages.nodes[0]];
+      view.update({ detail: fewer });
+      expect(disposed).toBe(true);
+      expect(view.stripCells.has('test')).toBe(false);
+    });
+
+    it('does not re-add a tooltip when nothing about the stage changed', () => {
+      const cell = view.stripCells.get('build');
+      const original = cell.tooltip;
+      view.update({ detail: pipelineDetail() });
+      expect(view.stripCells.get('build').tooltip).toBe(original);
+    });
+
+    it('scrolls to the stage when a cell is clicked', () => {
+      const row = view.stageRows.get('test');
+      let scrolled = false;
+      row.root.scrollIntoView = () => { scrolled = true; };
+      cells()[1].click();
+      expect(scrolled).toBe(true);
+      expect(row.root.classList.contains('gl-stage-flash')).toBe(true);
+    });
+
+    it('opens the section first, so a click on a collapsed panel is not a no-op', () => {
+      view.expandedSections.delete('current');
+      const row = view.stageRows.get('build');
+      row.root.scrollIntoView = () => {};
+      cells()[0].click();
+      expect(view.expandedSections.has('current')).toBe(true);
+    });
+
+    it('still draws a stage whose status GitLab only invented later', () => {
+      // The bug in gitlab-integration, the package this feature is modelled on:
+      // its status switch had no default, so `canceling` or `waiting_for_resource`
+      // rendered an empty span - an invisible gap in the strip. GitLab has grown
+      // that vocabulary twice, so unknown must stay visible and named.
+      const next = pipelineDetail();
+      next.stages.nodes[1].status = 'waiting_for_resource';
+      view.update({ detail: next });
+      const dot = cells()[1].querySelector('.gl-strip-dot');
+      expect(dot.className).toContain('icon-');
+      expect(cells()[1].getAttribute('aria-label')).toContain('waiting for a runner');
+
+      const invented = pipelineDetail();
+      invented.stages.nodes[1].status = 'quantum_pending_2031';
+      view.update({ detail: invented });
+      expect(cells()[1].querySelector('.gl-strip-dot').className).toContain('icon-primitive-dot');
+      expect(cells()[1].getAttribute('aria-label')).toContain('quantum_pending_2031');
+    });
+
+    it('clears the strip when there is no pipeline', () => {
+      view.update({ detail: null });
+      expect(view.stripCells.size).toBe(0);
+    });
+  });
+
   describe('patching rather than rebuilding', () => {
     it('keeps the same DOM node for a job across an update', () => {
       // If the rows were rebuilt every poll, scroll position, focus and text
