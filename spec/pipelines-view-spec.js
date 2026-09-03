@@ -171,9 +171,40 @@ describe('PipelinesView', () => {
       expect(cells()[1].querySelector('.gl-strip-name').textContent).toBe('build');
     });
 
+    it('never lets a stage name reach a tooltip as HTML', () => {
+      // atom.tooltips.add defaults to html:true and assigns straight to
+      // innerHTML with no sanitising. Stage names come from a GitLab server,
+      // so this has to be off.
+      const added = [];
+      spyOn(atom.tooltips, 'add').and.callFake((el, options) => {
+        added.push(options);
+        return { dispose () {} };
+      });
+      const fresh = new PipelinesView();
+      fresh.update(Object.assign({}, baseModel, { detail: pipelineDetail() }));
+      expect(added.length).toBeGreaterThan(0);
+      for (const options of added) expect(options.html).toBe(false);
+      fresh.destroy();
+    });
+
+    it('reads the tooltip text fresh on each hover instead of re-adding it', () => {
+      // A title function means a status change needs no dispose/re-add cycle,
+      // so a tooltip can never be dropped mid-hover.
+      const cell = view.stripCells.get('test');
+      const original = cell.tooltip;
+      expect(typeof atom.tooltips.findTooltips(cell.root)[0].getTitle()).toBe('string');
+      expect(atom.tooltips.findTooltips(cell.root)[0].getTitle()).toContain('running');
+
+      const next = pipelineDetail();
+      next.stages.nodes[1].status = 'failed';
+      view.update({ detail: next });
+      expect(view.stripCells.get('test').tooltip).toBe(original);
+      expect(atom.tooltips.findTooltips(cell.root)[0].getTitle()).toContain('failed');
+    });
+
     it('disposes a tooltip when its stage disappears', () => {
-      // A tooltip left attached to a removed element is a leak, and these
-      // elements come and go on every poll.
+      // atom.tooltips holds the target in a plain Map and adds a window resize
+      // listener per tooltip; removing the element alone leaks both.
       const cell = view.stripCells.get('test');
       let disposed = false;
       cell.tooltip = { dispose: () => { disposed = true; } };
@@ -182,13 +213,6 @@ describe('PipelinesView', () => {
       view.update({ detail: fewer });
       expect(disposed).toBe(true);
       expect(view.stripCells.has('test')).toBe(false);
-    });
-
-    it('does not re-add a tooltip when nothing about the stage changed', () => {
-      const cell = view.stripCells.get('build');
-      const original = cell.tooltip;
-      view.update({ detail: pipelineDetail() });
-      expect(view.stripCells.get('build').tooltip).toBe(original);
     });
 
     it('scrolls to the stage when a cell is clicked', () => {
@@ -319,6 +343,14 @@ describe('PipelinesView', () => {
       expect(humanDuration(252)).toBe('4m 12s');
       expect(humanDuration(3780)).toBe('1h 3m');
       expect(humanDuration(null)).toBe('');
+    });
+
+    it('renders an upper-case status the same as a lower-case one', () => {
+      // Belt to the client's braces: GraphQL sends job and pipeline statuses
+      // upper case, stage statuses lower case.
+      expect(lookOf('SUCCESS').icon).toBe(lookOf('success').icon);
+      expect(lookOf('SUCCESS').label).toBe('passed');
+      expect(lookOf('Manual').icon).toBe('playback-play');
     });
 
     it('renders an unknown status instead of throwing', () => {

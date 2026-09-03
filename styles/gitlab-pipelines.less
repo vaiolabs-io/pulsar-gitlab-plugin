@@ -294,6 +294,12 @@
     animation: gl-spin 1s linear infinite;
     display: inline-block;
   }
+
+  // An indefinite spinner is exactly what a reduced-motion setting is for.
+  @media (prefers-reduced-motion: reduce) {
+    .gl-spinning::before { animation: none; }
+    .gl-stage-flash { animation: none; background-color: @background-color-info; }
+  }
 }
 
 @keyframes gl-flash {

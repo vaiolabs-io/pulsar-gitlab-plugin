@@ -1,4 +1,4 @@
-const { GitLabClient, ACCESS, isTerminal } = require('../lib/gitlab/client');
+const { GitLabClient, ACCESS, isTerminal, normaliseStatus, normaliseDetail } = require('../lib/gitlab/client');
 
 function clientFor (overrides = {}) {
   const connection = Object.assign({
@@ -102,6 +102,58 @@ describe('GitLabClient', () => {
     });
   });
 
+  describe('status casing', () => {
+    // Observed against gitlab.com's GraphQL API on 2026-09-03, unauthenticated,
+    // on gitlab-org/gitlab-runner. This is the real shape, not a guess:
+    //   pipeline.status "RUNNING"   job.status "SUCCESS"   stage.status "running"
+    // The enums serialise as their upper-case names; stage.status is a plain
+    // String field. Left alone, "SUCCESS" matches nothing, so every icon falls
+    // back to a grey dot and a manual job never offers its Run button.
+    const asGitLabSendsIt = () => ({
+      iid: 42,
+      status: 'RUNNING',
+      stages: {
+        nodes: [{
+          name: 'build',
+          status: 'running',
+          jobs: { nodes: [{ name: 'binaries', status: 'RUNNING' }, { name: 'deploy', status: 'MANUAL' }] }
+        }]
+      }
+    });
+
+    it('lower-cases pipeline, stage and job statuses alike', () => {
+      const detail = normaliseDetail(asGitLabSendsIt());
+      expect(detail.status).toBe('running');
+      expect(detail.stages.nodes[0].status).toBe('running');
+      expect(detail.stages.nodes[0].jobs.nodes.map((job) => job.status)).toEqual(['running', 'manual']);
+    });
+
+    it('leaves an already lower-case status alone, so the REST path is untouched', () => {
+      const detail = normaliseDetail({ status: 'success', stages: { nodes: [{ status: 'success', jobs: { nodes: [{ status: 'success' }] } }] } });
+      expect(detail.status).toBe('success');
+      expect(detail.stages.nodes[0].jobs.nodes[0].status).toBe('success');
+    });
+
+    it('survives a pipeline with no stages or no jobs', () => {
+      expect(() => normaliseDetail({ status: 'SUCCESS' })).not.toThrow();
+      expect(() => normaliseDetail({ status: 'SUCCESS', stages: { nodes: [{ status: 'success' }] } })).not.toThrow();
+      expect(normaliseDetail(null)).toBe(null);
+    });
+
+    it('does not choke on a missing or non-string status', () => {
+      expect(normaliseStatus(undefined)).toBe(undefined);
+      expect(normaliseStatus(null)).toBe(null);
+      expect(normaliseStatus(7)).toBe(7);
+    });
+
+    it('makes the manual-job check work, which is what the bug actually broke', () => {
+      const detail = normaliseDetail(asGitLabSendsIt());
+      const manual = detail.stages.nodes[0].jobs.nodes.find((job) => job.status === 'manual');
+      expect(manual).toBeDefined();
+      expect(manual.name).toBe('deploy');
+    });
+  });
+
   describe('terminal statuses', () => {
     it('knows which statuses mean stop polling', () => {
       expect(isTerminal('success')).toBe(true);
@@ -111,6 +163,9 @@ describe('GitLabClient', () => {
       // "canceling" is not terminal - it is still doing something.
       expect(isTerminal('canceling')).toBe(false);
       expect(isTerminal('waiting_for_callback')).toBe(false);
+      // GraphQL sends these upper case.
+      expect(isTerminal('SUCCESS')).toBe(true);
+      expect(isTerminal('RUNNING')).toBe(false);
     });
   });
 });
