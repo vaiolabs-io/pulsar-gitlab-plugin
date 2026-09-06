@@ -72,6 +72,59 @@ describe('the package itself', () => {
     expect(atom.config.get('gitlab-pipelines.notifications')).toBe('failure');
   });
 
+  describe('the status bar light', () => {
+    function fakeStatusBar () {
+      return {
+        tiles: [],
+        addRightTile (options) {
+          const tile = {
+            item: options.item,
+            priority: options.priority,
+            destroyed: false,
+            destroy () { this.destroyed = true; }
+          };
+          this.tiles.push(tile);
+          return tile;
+        }
+      };
+    }
+
+    // The bug this guards: the tile was built in consumeStatusBar but the
+    // stores and the poll timer only ever came up from getView() or a command.
+    // Until you opened the panel once, the light sat on its constructor's idle
+    // state for ever, which is indistinguishable from a package that failed.
+    it('starts the package, so the light has something to report', async () => {
+      expect(main.connections).toBe(null);
+      expect(main.poller).toBe(null);
+
+      const bar = fakeStatusBar();
+      main.consumeStatusBar(bar);
+
+      expect(bar.tiles.length).toBe(1);
+      expect(main.connections).not.toBe(null);
+      expect(main.context).not.toBe(null);
+      expect(main.poller).not.toBe(null);
+    });
+
+    it('stays asleep when the user has turned the light off', () => {
+      atom.config.set('gitlab-pipelines.showStatusBar', false);
+
+      main.consumeStatusBar(fakeStatusBar());
+
+      expect(main.connections).toBe(null);
+      expect(main.poller).toBe(null);
+      atom.config.set('gitlab-pipelines.showStatusBar', true);
+    });
+
+    it('hands back a disposable that destroys the tile', () => {
+      const bar = fakeStatusBar();
+      const disposable = main.consumeStatusBar(bar);
+      expect(bar.tiles[0].destroyed).toBe(false);
+      disposable.dispose();
+      expect(bar.tiles[0].destroyed).toBe(true);
+    });
+  });
+
   describe('the panel', () => {
     it('opens into the right dock and toggles shut again', async () => {
       const item = await atom.workspace.open(PIPELINES_URI);
