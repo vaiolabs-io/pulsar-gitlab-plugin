@@ -136,9 +136,10 @@ describe('the package itself', () => {
       expect(main.poller).not.toBe(null);
     });
 
-    it('stays asleep only when both lights are off', async () => {
+    it('stays asleep only when every status bar tile is off', async () => {
       atom.config.set('gitlab-pipelines.showStatusBar', false);
       atom.config.set('gitlab-pipelines.showJobProgress', false);
+      atom.config.set('gitlab-pipelines.showStagesInStatusBar', false);
 
       main.consumeStatusBar(fakeStatusBar());
       windowFinishedStartingUp();
@@ -150,6 +151,7 @@ describe('the package itself', () => {
 
     it('still starts when only the job progress tile is on', async () => {
       atom.config.set('gitlab-pipelines.showStatusBar', false);
+      atom.config.set('gitlab-pipelines.showStagesInStatusBar', false);
       atom.config.set('gitlab-pipelines.showJobProgress', true);
 
       main.consumeStatusBar(fakeStatusBar());
@@ -219,15 +221,15 @@ describe('the package itself', () => {
         }
       };
       const disposable = main.consumeStatusBar(fakeStatusBar);
-      expect(added.length).toBe(2);
+      expect(added.length).toBe(3);
       expect(added[0].getItem().classList.contains('gitlab-pipelines-status')).toBe(true);
       expect(added[1].getItem().classList.contains('gitlab-pipelines-jobs')).toBe(true);
+      expect(added[2].getItem().classList.contains('gitlab-pipelines-stages')).toBe(true);
 
       // A status bar Tile is not a Disposable, so nothing would clean it up on
       // its own. One leaked tile per window reload is the classic symptom.
       disposable.dispose();
-      expect(added[0].destroyed).toBe(true);
-      expect(added[1].destroyed).toBe(true);
+      expect(added.every((tile) => tile.destroyed)).toBe(true);
     });
   });
 

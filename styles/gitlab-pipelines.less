@@ -320,6 +320,22 @@
   .gl-jobs-text { margin-left: 0.3em; }
 }
 
+.gitlab-pipelines-stages {
+  .gl-sb-stage {
+    margin-left: 0.25em;
+
+    &:first-child { margin-left: 0; }
+  }
+
+  // A dot standing for several folded-away stages. Set apart so it does not
+  // read as just one more stage.
+  .gl-sb-stage-folded {
+    margin-left: 0.4em;
+    padding-left: 0.35em;
+    border-left: 1px solid @text-color-subtle;
+  }
+}
+
 // Nothing to report - no GitLab remote here, or offline. Still legible and
 // still clickable, but clearly not a live status. Top level rather than nested
 // under one tile, because both status bar tiles use it.

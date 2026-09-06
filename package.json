@@ -84,6 +84,13 @@
       "default": true,
       "title": "Show pipeline status in the status bar"
     },
+    "showStagesInStatusBar": {
+      "order": 5,
+      "type": "boolean",
+      "default": true,
+      "title": "Show pipeline stages in the status bar",
+      "description": "A dot per stage, coloured by that stage's status. Click one to open the panel at that stage."
+    },
     "showJobProgress": {
       "order": 4,
       "type": "boolean",

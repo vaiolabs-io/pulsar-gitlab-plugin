@@ -14,7 +14,11 @@ and its own certificate settings.
   by how that stage is doing. Click one to jump to that stage in the list.
 - **A status bar light** showing whether the current branch is green.
 - **A job progress tile** next to it: how many jobs of the running pipeline
-  have finished, and how many failed. Both tiles can be switched off.
+  have finished, and how many failed.
+- **A stage strip in the status bar**: a dot per stage, coloured by that
+  stage's status. Click one to open the panel at that stage. Long pipelines
+  fold their tail into a single dot carrying the worst status in it.
+  Every status bar tile can be switched off.
 - **Run** a pipeline on the current branch. **Cancel** or **retry** one.
 - **Play** a manual job, **retry** or **cancel** a single job, without
   re-running the whole pipeline.
@@ -123,8 +127,10 @@ both would turn certificate checking off for the whole editor.
   or always.
 - **Show pipeline status in the status bar** — the light saying whether the
   branch is green.
-- **Show job progress in the status bar** — the second tile counting
-  finished and failed jobs. Turning both off stops all polling.
+- **Show job progress in the status bar** — the tile counting finished and
+  failed jobs.
+- **Show pipeline stages in the status bar** — the dot-per-stage strip.
+  Turning all three off stops all polling.
 
 There is no polling interval setting, on purpose. See below.
 
@@ -166,7 +172,7 @@ REST automatically.
 ## Development
 
 ```bash
-pulsar --test spec/          # 163 specs
+pulsar --test spec/          # 179 specs
 ```
 
 Run it against a throwaway config directory to keep your own untouched:
