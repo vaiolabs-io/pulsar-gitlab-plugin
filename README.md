@@ -10,6 +10,8 @@ and its own certificate settings.
 
 - **A panel** in the right dock: the pipeline for the branch you are on, broken
   into stages and jobs, plus the last ten pipelines and every schedule.
+- **A stage strip** across the top of the panel: one marker per stage, coloured
+  by how that stage is doing. Click one to jump to that stage in the list.
 - **A status bar light** showing whether the current branch is green.
 - **Run** a pipeline on the current branch. **Cancel** or **retry** one.
 - **Play** a manual job, **retry** or **cancel** a single job, without
@@ -159,7 +161,7 @@ REST automatically.
 ## Development
 
 ```bash
-pulsar --test spec/          # 108 specs
+pulsar --test spec/          # 129 specs
 ```
 
 Run it against a throwaway config directory to keep your own untouched:
@@ -198,10 +200,6 @@ lib/
   gitlab/client.js      the GitLab endpoints, and readable errors
   views/                dock panel, status tile, job log, connect dialog
 ```
-
-`ppm publish` is not usable for this package: it requires a GitHub remote, and
-registers a repository rather than uploading anything. Install by link, or with
-`ppm install <git remote>`.
 
 ## Licence
 
