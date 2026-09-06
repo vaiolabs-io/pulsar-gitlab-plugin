@@ -67,6 +67,50 @@ describe('finding the git remotes', () => {
     it('returns nothing for an empty config', () => {
       expect(remoteNamesIn('')).toEqual([]);
     });
+
+    it('ignores comments', () => {
+      expect(remoteNamesIn('# [remote "commented"]\n; [remote "also"]\n')).toEqual([]);
+    });
+  });
+
+  describe('remotes defined in an included file', () => {
+    it('follows include.path', () => {
+      const root = makeRoot();
+      const main = path.join(root, 'config');
+      const extra = path.join(root, 'extra');
+      fs.writeFileSync(extra, '[remote "fromInclude"]\n\turl = a\n');
+      fs.writeFileSync(main, '[remote "origin"]\n\turl = b\n[include]\n\tpath = ./extra\n');
+      expect(remoteNamesIn(fs.readFileSync(main, 'utf8'), main)).toEqual(['origin', 'fromInclude']);
+    });
+
+    // The condition is not evaluated. Over-including is safe: a name that
+    // should not be there simply has no url and gets dropped later.
+    it('follows includeIf without judging the condition', () => {
+      const root = makeRoot();
+      const main = path.join(root, 'config');
+      const extra = path.join(root, 'work');
+      fs.writeFileSync(extra, '[remote "work"]\n\turl = a\n');
+      fs.writeFileSync(main, '[includeIf "gitdir:~/nope/"]\n\tpath = ./work\n');
+      expect(remoteNamesIn(fs.readFileSync(main, 'utf8'), main)).toEqual(['work']);
+    });
+
+    it('does not loop on a config that includes itself', () => {
+      const root = makeRoot();
+      const main = path.join(root, 'config');
+      fs.writeFileSync(main, '[remote "origin"]\n\turl = a\n[include]\n\tpath = ./config\n');
+      expect(remoteNamesIn(fs.readFileSync(main, 'utf8'), main)).toEqual(['origin']);
+    });
+
+    it('shrugs off an include that is not there', () => {
+      const root = makeRoot();
+      const main = path.join(root, 'config');
+      fs.writeFileSync(main, '[remote "origin"]\n\turl = a\n[include]\n\tpath = ./missing\n');
+      expect(remoteNamesIn(fs.readFileSync(main, 'utf8'), main)).toEqual(['origin']);
+    });
+
+    it('does nothing with includes when it has no path to resolve against', () => {
+      expect(remoteNamesIn('[include]\n\tpath = ./extra\n')).toEqual([]);
+    });
   });
 
   describe('locating the config file', () => {
