@@ -15,7 +15,8 @@ and its own certificate settings.
 - **A status bar light** showing whether the current branch is green.
 - **A job progress tile** next to it: how many jobs of the running pipeline
   have finished, and how many failed.
-- **A stage strip in the status bar**: a dot per stage, coloured by that
+- **A stage strip in the status bar**: a circle per stage, filled once the
+  stage has a result and hollow while it is still to come, coloured by that
   stage's status. Click one to open the panel at that stage. Long pipelines
   fold their tail into a single dot carrying the worst status in it.
   Every status bar tile can be switched off.
@@ -172,7 +173,7 @@ REST automatically.
 ## Development
 
 ```bash
-pulsar --test spec/          # 179 specs
+pulsar --test spec/          # 187 specs
 ```
 
 Run it against a throwaway config directory to keep your own untouched:

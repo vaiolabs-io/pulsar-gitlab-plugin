@@ -45,6 +45,24 @@ describe('the status bar tile', () => {
     });
   });
 
+  describe('the GitLab mark', () => {
+    it('carries the logo, so three tiles are identifiably one package', () => {
+      const logo = tile.element.querySelector('svg.gl-logo');
+      expect(logo).not.toBe(null);
+      expect(logo.querySelector('path').getAttribute('d')).toContain('M491.999988');
+    });
+
+    it('hides the logo from screen readers - the tile title already says it', () => {
+      expect(tile.element.querySelector('svg.gl-logo').getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('keeps the logo across a repaint', () => {
+      tile.setPipeline({ status: 'SUCCESS', iid: 3, ref: 'main' });
+      tile.setInactive();
+      expect(tile.element.querySelectorAll('svg.gl-logo').length).toBe(1);
+    });
+  });
+
   describe('the showStatusBar setting', () => {
     it('hides the tile when turned off', () => {
       tile.setVisible(false);

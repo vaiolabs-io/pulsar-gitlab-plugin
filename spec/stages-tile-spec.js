@@ -69,6 +69,26 @@ describe('the status bar stage strip', () => {
     });
   });
 
+  describe('telling "not run yet" from "done"', () => {
+    const { notRunYet } = require('../lib/views/stages-tile');
+
+    it('treats queued and manual stages as not run', () => {
+      for (const status of ['created', 'pending', 'manual', 'scheduled', 'skipped']) {
+        expect(notRunYet(status)).toBe(true);
+      }
+    });
+
+    it('treats finished and running stages as run', () => {
+      for (const status of ['success', 'failed', 'running', 'canceled']) {
+        expect(notRunYet(status)).toBe(false);
+      }
+    });
+
+    it('does not care about casing', () => {
+      expect(notRunYet('MANUAL')).toBe(true);
+    });
+  });
+
   describe('drawing', () => {
     let tile, selected;
 
@@ -83,6 +103,20 @@ describe('the status bar stage strip', () => {
       tile.setPipeline(detailOf(['build', 'success'], ['test', 'failed'], ['deploy', 'created']));
       expect(tile.element.children.length).toBe(3);
       expect(tile.element.children[1].className).toContain('text-error');
+    });
+
+    // Circles, not octicons: the class carries the shape now, so a stray
+    // `icon-check` creeping back in would silently change what a dot means.
+    it('draws plain circles rather than status glyphs', () => {
+      tile.setPipeline(detailOf(['build', 'success']));
+      expect(tile.element.children[0].className).toContain('gl-sb-stage');
+      expect(tile.element.children[0].className).not.toContain('icon-');
+    });
+
+    it('draws stages that have not run as hollow circles', () => {
+      tile.setPipeline(detailOf(['build', 'success'], ['deploy', 'manual']));
+      expect(tile.element.children[0].className).not.toContain('gl-sb-stage-open');
+      expect(tile.element.children[1].className).toContain('gl-sb-stage-open');
     });
 
     it('opens the panel at the stage that was clicked', () => {
