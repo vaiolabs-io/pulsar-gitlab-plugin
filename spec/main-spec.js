@@ -72,6 +72,106 @@ describe('the package itself', () => {
     expect(atom.config.get('gitlab-pipelines.notifications')).toBe('failure');
   });
 
+  describe('the status bar light', () => {
+    // The start is deliberately deferred behind a timer, so this file's
+    // fake clock has to come off for these - same reason poller-spec does it.
+    beforeEach(() => jasmine.useRealClock());
+
+    function fakeStatusBar () {
+      return {
+        tiles: [],
+        addRightTile (options) {
+          const tile = {
+            item: options.item,
+            priority: options.priority,
+            destroyed: false,
+            destroy () { this.destroyed = true; }
+          };
+          this.tiles.push(tile);
+          return tile;
+        }
+      };
+    }
+
+    async function settle (predicate, ms) {
+      const until = Date.now() + ms;
+      while (Date.now() < until) {
+        if (predicate()) return true;
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+      return predicate();
+    }
+
+    function windowFinishedStartingUp () {
+      atom.packages.emitter.emit('did-activate-initial-packages');
+    }
+
+    // The crash this guards. consumeStatusBar runs while the window is still
+    // activating packages; reading the connection file and asking the keyring
+    // to decrypt a token from there took the renderer down natively. No spec
+    // can reproduce that - there are no connections under --test, so nothing
+    // reaches the keyring - so the rule is pinned structurally instead.
+    it('starts nothing while the status bar is being consumed', () => {
+      main.consumeStatusBar(fakeStatusBar());
+
+      expect(main.connections).toBe(null);
+      expect(main.context).toBe(null);
+      expect(main.poller).toBe(null);
+    });
+
+    it('falls back to a timer in case the startup signal never comes', () => {
+      main.consumeStatusBar(fakeStatusBar());
+
+      expect(main.statusStartPending).toBe(true);
+      expect(main.statusFallbackTimer).not.toBe(null);
+    });
+
+    it('starts once Pulsar says the initial packages are up', async () => {
+      main.consumeStatusBar(fakeStatusBar());
+      windowFinishedStartingUp();
+      await settle(() => main.connections !== null, 500);
+
+      expect(main.connections).not.toBe(null);
+      expect(main.context).not.toBe(null);
+      expect(main.poller).not.toBe(null);
+    });
+
+    it('stays asleep when the user has turned the light off', async () => {
+      atom.config.set('gitlab-pipelines.showStatusBar', false);
+
+      main.consumeStatusBar(fakeStatusBar());
+      windowFinishedStartingUp();
+      await settle(() => main.connections !== null, 200);
+
+      expect(main.connections).toBe(null);
+      expect(main.poller).toBe(null);
+    });
+
+    it('does not start a second time when the setting is toggled', async () => {
+      main.consumeStatusBar(fakeStatusBar());
+      windowFinishedStartingUp();
+      await settle(() => main.connections !== null, 500);
+
+      const store = main.connections;
+      const poller = main.poller;
+      atom.config.set('gitlab-pipelines.showStatusBar', false);
+      atom.config.set('gitlab-pipelines.showStatusBar', true);
+      await settle(() => false, 50);
+
+      expect(main.connections).toBe(store);
+      expect(main.poller).toBe(poller);
+    });
+
+    it('hands back a disposable that destroys the tile', () => {
+      const bar = fakeStatusBar();
+      const disposable = main.consumeStatusBar(bar);
+
+      expect(bar.tiles[0].destroyed).toBe(false);
+      disposable.dispose();
+      expect(bar.tiles[0].destroyed).toBe(true);
+    });
+  });
+
   describe('the panel', () => {
     it('opens into the right dock and toggles shut again', async () => {
       const item = await atom.workspace.open(PIPELINES_URI);

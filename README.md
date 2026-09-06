@@ -161,7 +161,7 @@ REST automatically.
 ## Development
 
 ```bash
-pulsar --test spec/          # 141 specs
+pulsar --test spec/          # 147 specs
 ```
 
 Run it against a throwaway config directory to keep your own untouched:
