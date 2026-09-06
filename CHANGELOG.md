@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2
 
 - Every git remote is found now, not just `origin`, `upstream`, `gitlab` and
   `fork`. Those four were hardcoded, so a remote called anything else was
@@ -8,7 +8,8 @@
   it checked against that same list. Pulsar's GitRepository cannot enumerate
   remotes, so the names are read from `.git/config` and each URL still comes
   back through the supported `getConfigValue`. Submodules, linked worktrees
-  and an unreadable config are all handled.
+  and an unreadable config are all handled, as are remotes defined in a file
+  pulled in by `[include]` or `[includeIf]`.
 
 ## 0.3.1
 
