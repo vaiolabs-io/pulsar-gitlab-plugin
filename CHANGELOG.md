@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.1
+
+- The status bar light now works without opening the panel first. It was built
+  in `consumeStatusBar`, but the connection store, the project context and the
+  poll timer only ever started from the panel or a command - so until you
+  opened the panel once, the light sat on its initial state and never reported
+  anything, which looks exactly like a broken package.
+- Starting is deferred until Pulsar reports its initial packages are up.
+  Doing that work inline crashed the renderer: `consumeStatusBar` runs on the
+  activation path, and reading the connection file and decrypting a token
+  there is a native, uncatchable crash.
+- The light no longer hides itself when the project has no GitLab remote. It
+  stays put, subdued, and its tooltip says which kind of nothing it is - no
+  connection configured yet, or no GitLab remote here.
+- Fixed "Show pipeline status in the status bar". Every repaint wrote
+  `display`, so turning the tile off only lasted until the next poll.
+- New: a **job progress** tile counting finished and failed jobs.
+- New: a **stage strip** in the status bar, a circle per stage, hollow while a
+  stage is still to come. Capped at six, with the tail folded into a single
+  circle carrying the worst status in it. Click one to open the panel at that
+  stage.
+- The light carries the GitLab tanuki, so the three tiles read as one package.
+
 ## 0.2.0
 
 - Add a stage strip to the panel header: one marker per stage, coloured by that
