@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Every git remote is found now, not just `origin`, `upstream`, `gitlab` and
+  `fork`. Those four were hardcoded, so a remote called anything else was
+  invisible - and "Git remote to follow" could not select one either, because
+  it checked against that same list. Pulsar's GitRepository cannot enumerate
+  remotes, so the names are read from `.git/config` and each URL still comes
+  back through the supported `getConfigValue`. Submodules, linked worktrees
+  and an unreadable config are all handled.
+
 ## 0.3.1
 
 - The status bar light now works without opening the panel first. It was built

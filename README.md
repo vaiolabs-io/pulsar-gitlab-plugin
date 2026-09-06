@@ -121,7 +121,8 @@ both would turn certificate checking off for the whole editor.
 
 ## Settings
 
-- **Git remote to follow** — leave blank and it uses the first remote whose host
+- **Git remote to follow** — the *name* of a remote, like `origin` or
+  `monitoring`, not a URL. Leave blank and it uses the first remote whose host
   matches one of your connections, which is what you want when `origin` is a
   GitHub mirror.
 - **Tell me when a pipeline finishes** — never, only on failure (the default),
@@ -173,7 +174,7 @@ REST automatically.
 ## Development
 
 ```bash
-pulsar --test spec/          # 187 specs
+pulsar --test spec/          # 203 specs
 ```
 
 Run it against a throwaway config directory to keep your own untouched:
