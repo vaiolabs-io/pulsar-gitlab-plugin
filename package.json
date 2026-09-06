@@ -83,6 +83,13 @@
       "type": "boolean",
       "default": true,
       "title": "Show pipeline status in the status bar"
+    },
+    "showJobProgress": {
+      "order": 4,
+      "type": "boolean",
+      "default": true,
+      "title": "Show job progress in the status bar",
+      "description": "A second tile counting how many jobs of the current pipeline have finished, and how many failed."
     }
   }
 }

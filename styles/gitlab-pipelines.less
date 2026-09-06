@@ -314,16 +314,21 @@
 
 .gitlab-pipelines-status {
   .gl-status-text { margin-left: 0.3em; }
+}
 
-  // Nothing to report - no GitLab remote here, or offline. Still legible and
-  // still clickable, but clearly not a live pipeline status.
-  //
-  // @text-color-subtle rather than a blanket opacity: the themes already
-  // define what "de-emphasised" looks like, and opacity would dim the tile
-  // against whatever sits behind it instead of following the theme.
-  &.gl-status-inactive {
-    color: @text-color-subtle;
-  }
+.gitlab-pipelines-jobs {
+  .gl-jobs-text { margin-left: 0.3em; }
+}
+
+// Nothing to report - no GitLab remote here, or offline. Still legible and
+// still clickable, but clearly not a live status. Top level rather than nested
+// under one tile, because both status bar tiles use it.
+//
+// @text-color-subtle rather than a blanket opacity: the themes already define
+// what "de-emphasised" looks like, and opacity would dim the tile against
+// whatever sits behind it instead of following the theme.
+.gl-status-inactive {
+  color: @text-color-subtle;
 }
 
 // ---- job log ---------------------------------------------------------------
