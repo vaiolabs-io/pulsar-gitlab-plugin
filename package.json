@@ -1,6 +1,6 @@
 {
   "name": "gitlab-pipelines",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "View, run and toggle GitLab CI/CD pipelines from inside Pulsar. Works with gitlab.com and self-hosted instances on a local network.",
   "keywords": [
     "gitlab",
