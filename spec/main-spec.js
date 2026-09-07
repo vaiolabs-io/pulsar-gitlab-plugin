@@ -210,6 +210,91 @@ describe('the package itself', () => {
     });
   });
 
+  describe('clicking a pipeline in the Recent list', () => {
+    const pipeline = { id: 90, iid: 41, ref: 'main', web_url: 'https://git.sds.lab/team/app/-/pipelines/90' };
+
+    beforeEach(() => {
+      spyOn(main, 'refresh').and.returnValue(Promise.resolve());
+      spyOn(atom.applicationDelegate, 'openExternal');
+      main.selectedPipeline = null;
+    });
+
+    it('shows it in the panel by default, rather than leaving the editor', async () => {
+      await main.handleViewRequest({ action: 'select-pipeline', pipeline });
+      expect(atom.applicationDelegate.openExternal).not.toHaveBeenCalled();
+      expect(main.selectedPipeline.iid).toBe(41);
+      expect(main.selectedPipeline.id).toBe(90);
+      expect(main.refresh).toHaveBeenCalled();
+    });
+
+    it('opens the browser instead when the setting says to', async () => {
+      atom.config.set('gitlab-pipelines.recentPipelineClick', 'browser');
+      await main.handleViewRequest({ action: 'select-pipeline', pipeline });
+      expect(atom.applicationDelegate.openExternal)
+        .toHaveBeenCalledWith('https://git.sds.lab/team/app/-/pipelines/90');
+      expect(main.selectedPipeline).toBe(null);
+    });
+
+    it('always opens the browser for the row link button, whatever the setting', async () => {
+      await main.handleViewRequest({ action: 'pipeline-open', pipeline });
+      expect(atom.applicationDelegate.openExternal)
+        .toHaveBeenCalledWith('https://git.sds.lab/team/app/-/pipelines/90');
+      expect(main.selectedPipeline).toBe(null);
+    });
+
+    it('lets go of the pipeline again', async () => {
+      await main.handleViewRequest({ action: 'select-pipeline', pipeline });
+      expect(main.selectedPipeline).not.toBe(null);
+      await main.handleViewRequest({ action: 'clear-selection' });
+      expect(main.selectedPipeline).toBe(null);
+    });
+  });
+
+  describe('loading the pipeline the user picked', () => {
+    const project = { id: 7, path_with_namespace: 'team/app' };
+
+    it('asks for nothing while no pipeline is picked', async () => {
+      main.selectedPipeline = null;
+      const client = { pipelineDetail: jasmine.createSpy('pipelineDetail') };
+      expect(await main.loadPinnedDetail(client, project)).toBeUndefined();
+      expect(client.pipelineDetail).not.toHaveBeenCalled();
+    });
+
+    it('fetches the picked pipeline by its iid', async () => {
+      main.selectedPipeline = { iid: 41, id: 90, ref: 'main' };
+      const client = {
+        pipelineDetail: jasmine.createSpy('pipelineDetail')
+          .and.returnValue(Promise.resolve({ iid: 41, status: 'failed' }))
+      };
+      const detail = await main.loadPinnedDetail(client, project);
+      expect(client.pipelineDetail).toHaveBeenCalledWith('team/app', 41);
+      expect(detail.status).toBe('failed');
+    });
+
+    it('falls back to REST when GraphQL will not answer', async () => {
+      main.selectedPipeline = { iid: 41, id: 90, ref: 'main' };
+      const client = {
+        pipelineDetail: () => Promise.resolve(null),
+        getPipeline: () => Promise.resolve({ id: 90, iid: 41, status: 'success', ref: 'main' }),
+        listJobs: () => Promise.resolve([
+          { id: 1, name: 'compile', stage: 'build', status: 'success', allow_failure: false }
+        ])
+      };
+      const detail = await main.loadPinnedDetail(client, project);
+      expect(detail.iid).toBe(41);
+      expect(detail.stages.nodes[0].jobs.nodes[0].name).toBe('compile');
+    });
+
+    it('gives up on a pipeline that has been deleted, instead of failing the refresh', async () => {
+      main.selectedPipeline = { iid: 41, id: 90, ref: 'main' };
+      const gone = Object.assign(new Error('Not found'), { status: 404 });
+      const client = { pipelineDetail: () => Promise.reject(gone) };
+      expect(await main.loadPinnedDetail(client, project)).toBe(null);
+    });
+
+    afterEach(() => { main.selectedPipeline = null; });
+  });
+
   describe('the status bar tile', () => {
     it('adds a tile and hands back something that removes it', () => {
       const added = [];

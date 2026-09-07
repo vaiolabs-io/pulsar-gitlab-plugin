@@ -1,6 +1,6 @@
 {
   "name": "gitlab-pipelines",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "View, run and toggle GitLab CI/CD pipelines from inside Pulsar. Works with gitlab.com and self-hosted instances on a local network.",
   "keywords": [
     "gitlab",
@@ -97,6 +97,24 @@
       "default": true,
       "title": "Show job progress in the status bar",
       "description": "A second tile counting how many jobs of the current pipeline have finished, and how many failed."
+    },
+    "recentPipelineClick": {
+      "order": 6,
+      "type": "string",
+      "default": "panel",
+      "radio": true,
+      "title": "Clicking a pipeline in the Recent list",
+      "description": "The panel shows that pipeline's stages and jobs, and clicking a job opens its runner log in the editor. Every pipeline row also has its own button to open it on GitLab.",
+      "enum": [
+        {
+          "value": "panel",
+          "description": "Shows it in the panel, so you can read job logs here"
+        },
+        {
+          "value": "browser",
+          "description": "Opens it on GitLab in your browser"
+        }
+      ]
     }
   }
 }

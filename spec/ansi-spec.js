@@ -91,6 +91,86 @@ describe('job log decoding', () => {
     });
   });
 
+  describe('timestamped logs', () => {
+    // GitLab Runner 18.7 turned FF_TIMESTAMPS on by default, so every line
+    // arrives behind a 32-byte header: 27 chars of UTC time, a space, a
+    // two-hex-digit stream number, E or O, then '+' or a space.
+    const ts = (body, { at = '2024-05-14T11:19:20.000000Z', stream = '00O', cont = ' ' } = {}) =>
+      `${at} ${stream}${cont}${body}`;
+
+    it('takes the header off an ordinary line', () => {
+      const [item] = parseLines(ts('npm install'));
+      expect(item.type).toBe('line');
+      expect(item.text).toBe('npm install');
+      expect(item.timestamp).toBe('2024-05-14T11:19:20.000000Z');
+    });
+
+    it('still finds a section marker hiding behind a header', () => {
+      const marker = `section_start:1699999999:prepare${'\r'}${ESC}[0KPreparing the runner`;
+      const [item] = parseLines(ts(marker));
+      expect(item.type).toBe('section-start');
+      expect(item.name).toBe('prepare');
+      expect(item.text).toBe('Preparing the runner');
+    });
+
+    it('joins a line the runner split across several', () => {
+      const text = [
+        ts('a very '),
+        ts('long ', { cont: '+' }),
+        ts('line', { cont: '+' }),
+        ts('next')
+      ].join('\n');
+      const items = parseLines(text);
+      expect(items.length).toBe(2);
+      expect(items[0].text).toBe('a very long line');
+      expect(items[1].text).toBe('next');
+    });
+
+    it('leaves an untimestamped log untouched', () => {
+      const [item] = parseLines('2024 was a good year');
+      expect(item.text).toBe('2024 was a good year');
+      expect(item.timestamp).toBe(null);
+    });
+
+    it('trusts the caller over the first line, for the later chunks of a tail', () => {
+      const [item] = parseLines(ts('still ticking'), { timestamps: true });
+      expect(item.text).toBe('still ticking');
+    });
+
+    it('strips the headers for the saved raw log', () => {
+      const raw = [ts('Preparing'), ts('OK')].join('\n');
+      expect(stripAnsi(raw)).toBe('Preparing\nOK');
+    });
+  });
+
+  describe('things that only look like section markers', () => {
+    it('ignores the text without the escape suffix that makes it a marker', () => {
+      // A build that echoes this string must not fold the rest of the log.
+      const [item] = parseLines('section_start:1699999999:prepare');
+      expect(item.type).toBe('line');
+      expect(item.text).toBe('section_start:1699999999:prepare');
+    });
+
+    it('reads the collapsed option GitLab puts on the noisy sections', () => {
+      const [item] = parseLines(`section_start:1:prep[collapsed=true]${'\r'}${ESC}[0KPreparing`);
+      expect(item.type).toBe('section-start');
+      expect(item.name).toBe('prep');
+      expect(item.collapsed).toBe(true);
+      expect(item.text).toBe('Preparing');
+    });
+
+    it('leaves a section without the option expanded', () => {
+      const [item] = parseLines(`section_start:1:prep${'\r'}${ESC}[0KPreparing`);
+      expect(item.collapsed).toBe(false);
+    });
+
+    it('accepts the clear-line escape GitLab puts in front of the marker', () => {
+      const [item] = parseLines(`${ESC}[0Ksection_start:1:prep${'\r'}${ESC}[0KPreparing`);
+      expect(item.type).toBe('section-start');
+      expect(item.name).toBe('prep');
+    });
+  });
+
   describe('stripAnsi', () => {
     it('removes colour codes and section markers', () => {
       const raw = [

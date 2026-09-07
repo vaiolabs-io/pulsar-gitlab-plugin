@@ -25,7 +25,10 @@ and its own certificate settings.
   re-running the whole pipeline.
 - **Toggle a schedule** on or off, or run it now.
 - **Job logs** in the centre pane, with the terminal colours rendered and the
-  runner's `section_start` blocks folded, tailing while the job runs.
+  runner's `section_start` blocks folded, tailing while the job runs. Click any
+  job to open its log; click any pipeline in the recent list to bring that
+  pipeline's jobs into the panel, so an older pipeline's logs are reachable
+  too.
 - **Check `.gitlab-ci.yml`** against your project before you push it.
 
 Buttons appear only when GitLab says the action is allowed, so you do not get a
@@ -127,6 +130,10 @@ both would turn certificate checking off for the whole editor.
   GitHub mirror.
 - **Tell me when a pipeline finishes** — never, only on failure (the default),
   or always.
+- **Clicking a pipeline in the Recent list** — shows it in the panel (the
+  default), so you can read its job logs without leaving the editor, or opens
+  it on GitLab in your browser. Whichever you pick, each row has its own link
+  button that always opens GitLab.
 - **Show pipeline status in the status bar** — the light saying whether the
   branch is green.
 - **Show job progress in the status bar** — the tile counting finished and
@@ -162,8 +169,17 @@ state rather than a notification per attempt. A 429 suspends every request to
 that host for exactly as long as GitLab asked. An expired token stops polling
 at once and asks you to reconnect.
 
-Job logs are fetched with an `ETag`, so an unchanged log costs almost nothing.
-On GitLab 19.0 and later it asks for just the new bytes instead.
+On GitLab 19.0 and later a job log is fetched with `byte_offset`, so each poll
+carries only the bytes added since the last one — that parameter does not exist
+before 19.0, so older servers send the whole log and it is sliced here instead.
+An `If-None-Match` header goes with the request as well, but the trace endpoint
+is not known to set an `ETag`, so nothing depends on it: "nothing new" is
+decided by the byte count, not by a 304.
+
+Since GitLab Runner 18.7 every log line arrives behind a 32-byte header holding
+a timestamp, the stream number and a continuation flag. It is stripped before
+the log is rendered, split lines are joined back up, and the sections GitLab
+marks `[collapsed=true]` open folded, matching what the GitLab web UI shows.
 
 The panel uses one GraphQL query for the current pipeline, because REST cannot
 tell you the stage order or whether an action is permitted. Everything else,

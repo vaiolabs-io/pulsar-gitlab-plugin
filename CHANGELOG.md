@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.3
+
+- Clicking a pipeline in **Recent pipelines** now shows it in the panel, with
+  its stages and jobs, so its runner logs are one click away. It used to leave
+  the editor and open GitLab in a browser, which was the only thing a click on
+  that list could do. The old behaviour is still available: set **Clicking a
+  pipeline in the Recent list** to "Opens it on GitLab in your browser", and
+  every row also has its own link button that always opens GitLab.
+- Job logs now decode the timestamps that GitLab Runner 18.7 and later put in
+  front of every line. That header is 32 bytes wide and sits ahead of section
+  markers too, so until now a modern runner's log showed the raw timestamps as
+  noise and folded no sections at all.
+- Lines the runner split across several log lines are joined back together
+  instead of being shown chopped up.
+- Section markers follow GitLab's own rule: the trailing `\r<ESC>[0K` is
+  required, the name charset is enforced, and `[collapsed=true]` is read, so a
+  section GitLab marks noisy now opens folded. A build that merely prints
+  `section_start:...` no longer swallows the rest of the log into a section.
+- A log chunk that ends mid-line no longer shows as two lines, and a chunk that
+  ends mid-character no longer produces a replacement character. Every poll
+  also stopped appending one empty line.
+- Trimming a very long log counted a whole collapsed section as a single line,
+  so the count drifted and the trim ate far more than it should. Worse, if the
+  section being written into was the one removed, every later line was appended
+  to a detached node and silently vanished. Both fixed.
+- 244 specs, up from 209. The job log view and the recent pipelines list had no
+  coverage at all.
+
 ## 0.3.2
 
 - Every git remote is found now, not just `origin`, `upstream`, `gitlab` and

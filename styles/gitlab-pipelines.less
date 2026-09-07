@@ -253,6 +253,23 @@
       white-space: nowrap;
     }
     .gl-pipeline-row-when { font-size: 0.85em; }
+
+    // The link button is quiet until the row is under the pointer, so a list
+    // of ten pipelines does not read as a wall of buttons.
+    .gl-pipeline-row-actions {
+      opacity: 0;
+      flex: none;
+    }
+    &:hover .gl-pipeline-row-actions,
+    .gl-pipeline-row-actions:focus-within { opacity: 1; }
+  }
+
+  // The pipeline currently shown above, so it is obvious which row you picked.
+  .gl-pipeline-row-selected {
+    background-color: @background-color-selected;
+    box-shadow: inset 2px 0 0 @text-color-info;
+
+    .gl-pipeline-row-actions { opacity: 1; }
   }
 
   .gl-schedule {

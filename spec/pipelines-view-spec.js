@@ -316,6 +316,81 @@ describe('PipelinesView', () => {
     });
   });
 
+  describe('the recent pipelines list', () => {
+    const pipelines = [
+      { id: 90, iid: 41, status: 'success', ref: 'main', updated_at: new Date().toISOString(), web_url: 'https://git.sds.lab/team/app/-/pipelines/90' },
+      { id: 91, iid: 42, status: 'failed', ref: 'topic', updated_at: new Date().toISOString(), web_url: 'https://git.sds.lab/team/app/-/pipelines/91' }
+    ];
+
+    it('asks to show the pipeline in the panel when a row is clicked', () => {
+      view.update(Object.assign({}, baseModel, { detail: null, pipelines }));
+      const events = [];
+      view.onDidRequest((event) => events.push(event));
+      view.element.querySelectorAll('.gl-pipeline-row')[1].onclick();
+      expect(events.length).toBe(1);
+      expect(events[0].action).toBe('select-pipeline');
+      expect(events[0].pipeline.iid).toBe(42);
+    });
+
+    it('gives every row its own button to open GitLab, without also selecting it', () => {
+      view.update(Object.assign({}, baseModel, { detail: null, pipelines }));
+      const events = [];
+      view.onDidRequest((event) => events.push(event));
+      const row = view.element.querySelectorAll('.gl-pipeline-row')[0];
+      row.querySelector('.gl-pipeline-row-actions button').click();
+      expect(events.length).toBe(1);
+      expect(events[0].action).toBe('pipeline-open');
+      expect(events[0].pipeline.id).toBe(90);
+    });
+
+    it('sends the pipeline from the latest poll, not the one the row was built with', () => {
+      view.update(Object.assign({}, baseModel, { detail: null, pipelines }));
+      const moved = [Object.assign({}, pipelines[0], { status: 'failed' }), pipelines[1]];
+      view.update(Object.assign({}, baseModel, { detail: null, pipelines: moved }));
+      const events = [];
+      view.onDidRequest((event) => events.push(event));
+      view.element.querySelectorAll('.gl-pipeline-row')[0].onclick();
+      expect(events[0].pipeline.status).toBe('failed');
+    });
+
+    it('marks the row whose pipeline is on show', () => {
+      view.update(Object.assign({}, baseModel, {
+        detail: pipelineDetail(), pipelines, pinnedPipelineIid: 42
+      }));
+      const rows = view.element.querySelectorAll('.gl-pipeline-row');
+      expect(rows[0].classList.contains('gl-pipeline-row-selected')).toBe(false);
+      expect(rows[1].classList.contains('gl-pipeline-row-selected')).toBe(true);
+    });
+  });
+
+  describe('when a pipeline has been picked out of the recent list', () => {
+    it('renames the section and offers a way back to the branch', () => {
+      view.update(Object.assign({}, baseModel, { detail: pipelineDetail(), pinnedPipelineIid: 42 }));
+      expect(view.currentSection.label.textContent).toBe('Pipeline #42');
+
+      const events = [];
+      view.onDidRequest((event) => events.push(event));
+      view.currentSection.actions.querySelector('button').click();
+      expect(events[0].action).toBe('clear-selection');
+    });
+
+    it('goes back to calling itself the current branch once nothing is picked', () => {
+      view.update(Object.assign({}, baseModel, { detail: pipelineDetail(), pinnedPipelineIid: 42 }));
+      view.update(Object.assign({}, baseModel, { detail: pipelineDetail(), pinnedPipelineIid: null }));
+      expect(view.currentSection.label.textContent).toBe('Current branch');
+      expect(view.currentSection.actions.children.length).toBe(0);
+    });
+
+    it('still shows the stages and jobs, so a job log is one click away', () => {
+      view.update(Object.assign({}, baseModel, { detail: pipelineDetail(), pinnedPipelineIid: 42 }));
+      const events = [];
+      view.onDidRequest((event) => events.push(event));
+      view.element.querySelector('.gl-job').click();
+      expect(events[0].action).toBe('open-log');
+      expect(events[0].job.name).toBe('compile');
+    });
+  });
+
   describe('when nothing is set up', () => {
     it('offers to add a connection', () => {
       view.update({ context: null, connections: [], detail: null });
